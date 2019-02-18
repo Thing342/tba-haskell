@@ -1,0 +1,58 @@
+name:                tba-haskell
+version:             0.1.0.0
+github:              "githubuser/tba-haskell"
+license:             BSD3
+author:              "Author name here"
+maintainer:          "example@example.com"
+copyright:           "2019 Author name here"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/tba-haskell#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- enummapset >= 0.6 && < 0.7
+- wreq
+- aeson
+- containers
+- lens
+- lens-aeson
+- scientific
+- text
+- vector
+- unordered-containers
+
+library:
+  source-dirs: src
+
+executables:
+  tba-haskell-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tba-haskell
+
+tests:
+  tba-haskell-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - tba-haskell
