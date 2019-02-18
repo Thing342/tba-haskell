@@ -10,7 +10,7 @@ import Data.Aeson.Types
 import Data.Aeson.Lens (_String, _Double, AsValue, key, values, nth)
 import Data.Scientific
 
-import TBA.Match
+import TBA.Match hiding (AllianceColor(..))
 
 data Color = Red | Blue
 

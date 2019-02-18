@@ -4,19 +4,17 @@
 module Main where
 
 import Lib
-import AesonDemo
+import TBA.Match
+import TBA.Games.DeepSpace
 
-import Data.Aeson
-import Data.Aeson.Types (parseEither)
-
-import qualified Data.Text as T
-import qualified Data.Text.Lazy.IO as T
-import qualified Data.Text.Lazy.Encoding as T
+import Control.Lens
+import Network.Wreq (responseBody)
 
 main :: IO ()
 main = do
-    putStrLn "Enter your JSON to decode below:"
-    s <- T.encodeUtf8 <$> T.getLine
-    let res = (parseEither parseReferers =<< eitherDecode s) :: Either String [Referer]
-    putStrLn $ show res
-
+    putStrLn "Enter code of event to get scores: "
+    event <- getLine
+    matches <- decodeMatches event
+    let scores = matches ^.. responseBody . traverse . (redScore <> blueScore) . totalPoints
+    putStrLn $ "Scores: " ++ (show scores)
+    putStrLn $ "Total: " ++  (show $ sum scores)

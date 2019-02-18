@@ -15,16 +15,20 @@ import Control.Monad (when, guard, liftM)
 import Data.String (IsString)
 import Data.EnumMap (EnumMap, fromList, lookup)
 
+import qualified Data.Set as S
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as T
-import qualified Data.Vector as V
 import qualified Data.Foldable as F
 
 import qualified TBA.Games.DeepSpace as DS
 
+data AllianceColor = Red | Blue deriving (Show, Eq, Ord, Enum)
+
 data Match = Match {
     _redScore :: MatchScoreBreakdown
     , _blueScore :: MatchScoreBreakdown
+    , _redTeams :: S.Set T.Text
+    , _blueTeams :: S.Set T.Text
 } deriving (Show)
 
 boolId :: Value -> Parser Bool
@@ -73,11 +77,17 @@ deepSpaceParser = withObject "2019 match breakdown object" $ \o -> do
 
 instance FromJSON Match where
     parseJSON = withObject "match" $ \o -> do
+        alliances <- o .: "alliances"
+        redAlliance <- alliances .: "red"
+        blueAlliance <- alliances .: "blue"
+        _redTeams <- redAlliance .: "team_keys"
+        _blueTeams <- blueAlliance .: "team_keys"
+
         scores <- o .: "score_breakdown"
-        redScoreO  <- scores .: "red"
-        blueScoreO <- scores .: "blue"
-        _redScore <- deepSpaceParser redScoreO
-        _blueScore <- deepSpaceParser blueScoreO
+        redScoreObj  <- scores .: "red"
+        blueScoreObj <- scores .: "blue"
+        _redScore <- deepSpaceParser redScoreObj
+        _blueScore <- deepSpaceParser blueScoreObj
         return Match{..}
 
 data MatchScoreBreakdown = 
@@ -111,6 +121,6 @@ data MatchScoreBreakdown =
         _notAdjustPoints :: String
     } deriving (Show)
 
---makePrisms ''MatchScoreBreakdown
+makePrisms ''MatchScoreBreakdown
 makeLenses ''MatchScoreBreakdown
 makeLenses ''Match
