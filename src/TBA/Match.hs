@@ -12,6 +12,7 @@ import Data.Aeson.Types
 import Data.Traversable (for)
 import Text.Read (readMaybe)
 import Control.Monad (when, guard, liftM)
+import Control.Lens.Prism(Prism, prism)
 import Data.String (IsString)
 import Data.EnumMap (EnumMap, fromList, lookup)
 
@@ -20,15 +21,25 @@ import qualified Data.HashMap.Strict as HM
 import qualified Data.Text as T
 import qualified Data.Foldable as F
 
+import TBA.Enums
 import qualified TBA.Games.DeepSpace as DS
 
-data AllianceColor = Red | Blue deriving (Show, Eq, Ord, Enum)
-
+type MatchTime = Integer
 data Match = Match {
-    _redScore :: MatchScoreBreakdown
-    , _blueScore :: MatchScoreBreakdown
-    , _redTeams :: S.Set T.Text
-    , _blueTeams :: S.Set T.Text
+    _matchKey :: T.Text,
+    _compLevel :: CompetitionLevel,
+    _setNumber :: Integer,
+    _matchNumber :: Integer,
+    _winningAlliance :: MatchWinner,
+    _eventKey :: T.Text,
+    _scheduledTime :: MatchTime,
+    _predictedTime :: MatchTime,
+    _actualTime :: MatchTime,
+    _resultsPostTime :: MatchTime,
+    _redScore :: MatchScoreBreakdown,
+    _blueScore :: MatchScoreBreakdown,
+    _redTeams :: S.Set T.Text,
+    _blueTeams :: S.Set T.Text
 } deriving (Show)
 
 boolId :: Value -> Parser Bool
@@ -44,7 +55,8 @@ enumMapFieldParse enums keyfunc subparser o = let
         return (enum, sub)
     in (liftM fromList) ( mapM mapper enums )
 
-deepSpaceParser :: Value -> Parser MatchScoreBreakdown
+type MatchScoreBreakdownParser = Value -> Parser MatchScoreBreakdown
+deepSpaceParser :: MatchScoreBreakdownParser
 deepSpaceParser = withObject "2019 match breakdown object" $ \o -> do
     -- Simple Fields
     _adjustPoints     <- o .: "adjustPoints"
@@ -77,11 +89,24 @@ deepSpaceParser = withObject "2019 match breakdown object" $ \o -> do
 
 instance FromJSON Match where
     parseJSON = withObject "match" $ \o -> do
+        _matchKey <- o .: "key"
+        _compLevel <- o .: "comp_level"
+        _setNumber <- o .: "set_number"
+        _matchNumber <- o .: "match_number"
+        _winningAlliance <- o .: "winning_alliance"
+        _eventKey <- o .: "event_key"
+        _scheduledTime <- o .: "time"
+        _predictedTime <- o .: "predicted_time"
+        _actualTime <- o .: "actual_time"
+        _resultsPostTime <- o .: "post_result_time"
+
         alliances <- o .: "alliances"
         redAlliance <- alliances .: "red"
         blueAlliance <- alliances .: "blue"
         _redTeams <- redAlliance .: "team_keys"
         _blueTeams <- blueAlliance .: "team_keys"
+
+        let breakdownParser = deepSpaceParser -- TODO: generify this
 
         scores <- o .: "score_breakdown"
         redScoreObj  <- scores .: "red"
@@ -124,3 +149,18 @@ data MatchScoreBreakdown =
 makePrisms ''MatchScoreBreakdown
 makeLenses ''MatchScoreBreakdown
 makeLenses ''Match
+
+_teamScore :: T.Text -> Match -> Maybe MatchScoreBreakdown
+_teamScore team match = let
+    isRed = S.member team $ _redTeams match
+    isBlue = S.member team $ _blueTeams match
+    in case (isRed, isBlue) of
+        (True, _) -> Just $ _redScore match
+        (_, True) -> Just $ _blueScore match
+        _ -> Nothing
+
+teamScore :: (Contravariant f, Choice p, Applicative f) =>
+    T.Text
+    -> p MatchScoreBreakdown (f MatchScoreBreakdown)
+    -> p Match (f Match)
+teamScore team = to (_teamScore team ) . _Just
