@@ -49,10 +49,31 @@ showTeamAttrition = do
     putStrLn $ "Attrition: " ++ (show attrition)
     putStrLn $ "Rookies: " ++ (show rookies)
 
+showTeamAverageScore :: IO()
+showTeamAverageScore = do
+    client <- createClient
+    eventName <- ask "Enter event code: (e.g. 2019scmb)"
+    teamKey <- askT "Enter team key: (e.g. frc254)"
+
+    matches <- tbaEventMatches eventName client
+
+    let scores = matches ^.. responseBody . traverse . teamScore teamKey . totalPoints
+    let scoresF = fromIntegral <$> scores
+
+    putStrLn $ "Scores: " ++ (show scores)
+    putStrLn $ "Total: " ++  (show $ sum scoresF)
+    putStrLn $ "Average: " ++ (show $ mean scoresF)
+
 ask :: String -> IO String
 ask question = do
     putStrLn question
     getLine
+
+askT :: String -> IO T.Text
+askT question = do
+    putStrLn question
+    s <- getLine
+    return $ T.pack s
 
 createClient :: IO TBAClient
 createClient = do
