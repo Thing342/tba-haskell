@@ -45,6 +45,9 @@ tbaRequest path client = do
 tbaEventMatches :: String -> TBAClient -> IO (Response [Match])
 tbaEventMatches eventCode = tbaRequest ("event/" ++ eventCode ++ "/matches")
 
+tbaSingleMatch :: String -> TBAClient -> IO (Response Match)
+tbaSingleMatch matchKey = tbaRequest ("match/" ++ matchKey)
+
 teamNumSet :: String -> TBAClient -> IO (DS.Set Integer)
 teamNumSet dName client = do
     let path = "district/" ++ dName ++ "/teams"
