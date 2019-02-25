@@ -11,7 +11,7 @@ import Text.Read (readMaybe)
 
 data RobotPos = Robot1 | Robot2 | Robot3 deriving (Show, Eq, Enum)
 data AutoAction = NoAuto | AutoRun deriving (Show, Eq)
-data EndgameAction = NoEndgame | Parking | Climbing | Levitate deriving (Show, Eq)
+data EndgameAction = NoEndgame | UnknownEndgame | Parking | Climbing | Levitate deriving (Show, Eq)
 data GameData = RRR | RLR | LRL | LLL deriving (Read, Show, Eq)
 
 instance FromJSON AutoAction where
@@ -23,6 +23,7 @@ instance FromJSON AutoAction where
 instance FromJSON EndgameAction where
     parseJSON = withText "endgame action" $ \s -> case s of
         "None" -> return NoEndgame
+        "Unknown" -> return UnknownEndgame
         "Parking" -> return Parking
         "Climbing" -> return Climbing
         "Levitate" -> return Levitate

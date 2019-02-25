@@ -18,7 +18,7 @@ import qualified Data.Text as T
 import qualified Data.Set as S
 
 main :: IO()
-main = showTeamAttrition
+main = showTeamAverageScore
 
 showAverageScores :: IO ()
 showAverageScores = do
@@ -34,6 +34,7 @@ showAverageScores = do
     putStrLn $ "Total: " ++  (show $ sum scoresF)
     putStrLn $ "Average: " ++ (show $ mean scoresF)
 
+{--
 showTeamAttrition :: IO ()
 showTeamAttrition = do
     client <- createClient
@@ -48,6 +49,7 @@ showTeamAttrition = do
 
     putStrLn $ "Attrition: " ++ (show attrition)
     putStrLn $ "Rookies: " ++ (show rookies)
+--}
 
 showTeamAverageScore :: IO()
 showTeamAverageScore = do
