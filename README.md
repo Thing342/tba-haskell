@@ -50,5 +50,6 @@ Walking through this code, we note:
         * 2018 and 2019 directly supported
 
 ## Supported Requests
-* `tbaEventMatches :: String -> TBAClient -> IO (Response [Match])`
-* `tbaSingleMatch :: String -> TBAClient -> IO (Response Match)`
+* `tbaDistrictMatches :: Int -> District -> TBARequest [Match]`
+* `tbaEventMatches :: String -> TBARequest [Match]`
+* `tbaSingleMatch :: String -> TBARequest Match`

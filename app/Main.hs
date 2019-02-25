@@ -27,7 +27,7 @@ showAverageScores = do
     
     matches <- tbaEventMatches event client
 
-    let scores = matches ^.. responseBody . traverse . (redScore <> blueScore) . totalPoints
+    let scores = matches ^.. traverse . (redScore <> blueScore) . totalPoints
     let scoresF = fromIntegral <$> scores
 
     putStrLn $ "Scores: " ++ (show scores)
@@ -59,7 +59,7 @@ showTeamAverageScore = do
 
     matches <- tbaEventMatches eventName client
 
-    let scores = matches ^.. responseBody . traverse . teamScore teamKey . totalPoints
+    let scores = matches ^.. traverse . teamScore teamKey . totalPoints
     let scoresF = fromIntegral <$> scores
 
     putStrLn $ "Scores: " ++ (show scores)

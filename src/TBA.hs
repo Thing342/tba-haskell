@@ -25,6 +25,8 @@ data TBAClient = TBAClient {
     , tbaSession :: S.Session
 }
 
+type TBARequest a = TBAClient -> IO a
+
 tbaNew :: T.Text -> IO TBAClient
 tbaNew tbaAuth = do
     tbaSession <- S.newSession
@@ -32,7 +34,7 @@ tbaNew tbaAuth = do
 
 tbaParams client = defaults & param "X-TBA-Auth-Key" .~ [tbaAuth client]
 
-tbaRequest :: (FromJSON a) => String -> TBAClient -> IO (Response a)
+tbaRequest :: (FromJSON a) => String -> TBARequest a
 tbaRequest path client = do
     let params = tbaParams client
     let sess = tbaSession client
@@ -43,34 +45,31 @@ tbaRequest path client = do
 
     -- make request and parse as json
     resp <- S.getWith params sess url
-    asJSON resp
+    jsonResp <- asJSON resp
+    return $ jsonResp ^. responseBody
 
-tbaDistrictEventNames :: Int -> District -> TBAClient -> IO [T.Text]
+tbaDistrictEventNames :: Int -> District -> TBARequest [T.Text]
 tbaDistrictEventNames year district client = do
     let dName = districtCode year district
     let url = "district/" ++ dName ++ "/events/keys"
-    resp <- tbaRequest url client
-    return $ resp ^. responseBody
+    tbaRequest url client
 
-tbaDistrictMatches :: Int -> District -> TBAClient -> IO [Match]
+tbaDistrictMatches :: Int -> District -> TBARequest [Match]
 tbaDistrictMatches year district client = do
     eventKeys <- tbaDistrictEventNames year district client
-    matches_nested <- for eventKeys $ \key -> do
-        let keyS = T.unpack key
-        resp <- tbaEventMatches keyS client
-        return $ resp ^. responseBody
+    matches_nested <- for eventKeys $ \key -> tbaEventMatches (T.unpack key) client
     return $ join matches_nested
 
-tbaEventMatches :: String -> TBAClient -> IO (Response [Match])
+tbaEventMatches :: String -> TBARequest [Match]
 tbaEventMatches eventCode = tbaRequest ("event/" ++ eventCode ++ "/matches")
 
-tbaSingleMatch :: String -> TBAClient -> IO (Response Match)
+tbaSingleMatch :: String -> TBARequest Match
 tbaSingleMatch matchKey = tbaRequest ("match/" ++ matchKey)
 
-teamNumSet :: Int -> District -> TBAClient -> IO (DS.Set Integer)
+teamNumSet :: Int -> District -> TBARequest (DS.Set Integer)
 teamNumSet year district client = do
     let dName = districtCode year district
     let path = "district/" ++ dName ++ "/teams"
-    dTeamsJson <- tbaRequest path client :: IO (Response Array)
-    let dSet = DS.fromList $ dTeamsJson ^.. responseBody . traverse . key "team_number" . _Integer
+    dTeamsJson <- tbaRequest path client :: IO Array
+    let dSet = DS.fromList $ dTeamsJson ^.. traverse . key "team_number" . _Integer
     return dSet
